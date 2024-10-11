@@ -35,98 +35,20 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-const data: Products[] = [
-  {
-    id: "m5gr84i9",
-    price: 316,
-    name: "Te",
-  },
-  {
-    id: "3u1reuv4",
-    price: 242,
-    name: "Cafe",
-  },
-  {
-    id: "derv1ws0",
-    price: 837,
-    name: "Pastel de tres leches",
-  },
-  {
-    id: "5kma53ae",
-    price: 874,
-    name: "Frappe",
-  },
-  {
-    id: "bhqecj4p",
-    price: 721,
-    name: "Bolsa de cafe",
-  },
-]
-
-export type Products = {
-  id: string
-  price: number
-  name: string
+type Products = {
+    id: number;
+    name: string;
+    price: number;
+    quantity?: number;
+    selected?: boolean;
 }
 
-export const columns: ColumnDef<Products>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "name",
-    header: "Producto",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("name")}</div>
-    ),
-  },
-  {
-    accessorKey: "price",
-    header: () => <div className="text-right">Price</div>,
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("price"))
+interface ProductsTableProps {
+    products: Products[];
+    quantityHandler: (event: any, productId: number) => void;
+}
 
-      const formatted = new Intl.NumberFormat("es-MX", {
-        style: "currency",
-        currency: "MXN",
-      }).format(amount)
-
-      return <div className="text-right font-medium">{formatted}</div>
-    },
-  },
-  {
-    id: "quantity",
-    cell: ({row}) => {
-
-        return (
-            <div className="flex items-end">
-                <Input type="number" value="1" className="w-1/4 ml-auto"/>
-            </div>
-        )
-    }
-  }
-]
-
-export function ProductsTable() {
+export function ProductsTable({ products, quantityHandler }: ProductsTableProps) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -135,9 +57,78 @@ export function ProductsTable() {
     React.useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = React.useState({})
 
+  const columns: ColumnDef<Products>[] = React.useMemo(() => {
+    return [
+        // { TODO: completar funcionalidad del checkbox
+        //   id: "select",
+        //   accessorKey: "selected",
+        //   header: ({ table }) => (
+        //     <Checkbox
+        //       checked={
+        //         table.getIsAllPageRowsSelected() ||
+        //         (table.getIsSomePageRowsSelected() && "indeterminate")
+        //       }
+        //       onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        //       aria-label="Select all"
+        //     />
+        //   ),
+        //   cell: ({ row }) => (
+        //     <Checkbox
+        //       // checked={row.original.selected}
+        //       checked={row.getIsSelected()}
+        //       onCheckedChange={(value) => {
+        //         // console.log('change', row.getValue('selected'))
+        //         // row.original.selected = !!value;
+        //         row.toggleSelected(!!value)
+        //       }}
+        //       aria-label="Select row"
+        //     />
+        //   ),
+        //   enableSorting: false,
+        //   enableHiding: false,
+        // },
+        {
+          accessorKey: "name",
+          header: "Producto",
+          cell: ({ row }) => (
+            <div className="capitalize">{row.getValue("name")}</div>
+          ),
+        },
+        {
+          accessorKey: "price",
+          header: () => <div className="text-right">Precio por unidad</div>,
+          cell: ({ row }) => {
+            const amount = parseFloat(row.getValue("price"))
+      
+            const formatted = new Intl.NumberFormat("es-MX", {
+              style: "currency",
+              currency: "MXN",
+            }).format(amount)
+      
+            return <div className="text-right font-medium">{formatted}</div>
+          },
+        },
+        {
+          accessorKey: "quantity",
+          header: () => <div className="text-right">Cantidad</div>,
+          cell: ({row}) => {
+              return (
+                  <div className="flex items-end">
+                      <Input 
+                        type="number" 
+                        value={row.original?.quantity} 
+                        className="w-1/3 sm:w-1/3 lg:w-1/4 ml-auto" 
+                        onChange={(e) => quantityHandler(e, row.original.id)}/>
+                  </div>
+              )
+          }
+        }
+    ]
+  }, [])
+
   const table = useReactTable({
-    data,
-    columns,
+    data: products,
+    columns: columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -227,7 +218,7 @@ export function ProductsTable() {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  No has agregado productos.
                 </TableCell>
               </TableRow>
             )}

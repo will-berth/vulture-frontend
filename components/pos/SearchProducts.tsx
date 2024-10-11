@@ -1,29 +1,25 @@
-import { Button } from "../ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { ProductCombobox } from "./ProductCombobox";
 import { ProductsTable } from "./ProductsTable";
 
+
+
+interface Products {
+    id: number;
+    name: string;
+    price: number;
+    stock: number;
+    quantity?: number;
+}
 interface SearchProductsProps{
     className?: string;
+    onSelect: (product: any) => void;
+    products: Products[];
+    selectedProducts: Products[];
+    quantityHandler: (event: any, productId: number) => void;
 }
 
-const products = [
-    {
-      id: 1,
-      name: "Cafe Negro",
-      price: 23.4
-    },
-    {
-        id: 2,
-        name: "Te Negro",
-        price: 18.1
-    },
-]
-
-export function SearchProducts({ className }: SearchProductsProps){
+export function SearchProducts({ className, onSelect, products, selectedProducts, quantityHandler }: SearchProductsProps){
     return (
         <Card className={className}>
             <CardHeader className="pb-3">
@@ -33,15 +29,14 @@ export function SearchProducts({ className }: SearchProductsProps){
                 <form>
                     <div className="grid w-full items-center gap-4">
                         <div className="flex flex-col space-y-1.5">
-                            <ProductCombobox/>
+                            <ProductCombobox onSelect={onSelect} products={products}></ProductCombobox>
                         </div>
                     </div>
                 </form>
-                <ProductsTable/>
+                <ProductsTable 
+                    products={selectedProducts}
+                    quantityHandler={quantityHandler}/>
             </CardContent>
-            {/* <CardFooter>
-                <Button variant="outline">Agregar a Orden</Button>
-            </CardFooter> */}
         </Card>
     );
 }

@@ -18,77 +18,104 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { searchProductsByName } from "@/services/api"
+import useDebounce from "@/hooks/useDebounce"
 
-const frameworks = [
-  {
-    value: "next.js",
-    label: "Next.js",
-  },
-  {
-    value: "sveltekit",
-    label: "SvelteKit",
-  },
-  {
-    value: "nuxt.js",
-    label: "Nuxt.js",
-  },
-  {
-    value: "remix",
-    label: "Remix",
-  },
-  {
-    value: "astro",
-    label: "Astro",
-  },
-]
 
-export function ProductCombobox() {
-  const [open, setOpen] = React.useState(false)
+interface Products {
+    id: number;
+    name: string;
+    price: number;
+    stock: number;
+}
+interface SearchProductsProps {
+    onSelect: (product: any) => void;
+    products: Products[];
+}
+
+export function ProductCombobox({ onSelect, products }: SearchProductsProps) {
+  const [openList, setOpenList] = React.useState(false)
   const [value, setValue] = React.useState("")
+  const [query, setQuery] = React.useState("")
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={openList} onOpenChange={setOpenList}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
           role="combobox"
-          aria-expanded={open}
+          aria-expanded={openList}
           className="w-[200px] justify-between"
         >
           {value
-            ? frameworks.find((framework) => framework.value === value)?.label
+            ? products.find((p) => p.id.toString() === value)?.name
             : "Buscar producto..."}
           <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
         <Command>
-          <CommandInput placeholder="Buscar producto..." className="h-9" />
-          <CommandList>
-            <CommandEmpty>No framework found.</CommandEmpty>
-            <CommandGroup>
-              {frameworks.map((framework) => (
-                <CommandItem
-                  key={framework.value}
-                  value={framework.value}
-                  onSelect={(currentValue) => {
-                    setValue(currentValue === value ? "" : currentValue)
-                    setOpen(false)
-                  }}
-                >
-                  {framework.label}
-                  <CheckIcon
-                    className={cn(
-                      "ml-auto h-4 w-4",
-                      value === framework.value ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
+          <CommandInput onValueChange={(val) => {
+            setQuery(val);
+          }} placeholder="Buscar producto..." className="h-9" />
+            <SearchResults query={query} onSelect={onSelect} setOpenList={setOpenList}/>
         </Command>
       </PopoverContent>
     </Popover>
   )
+}
+
+interface SearchResultsProps {
+    query: string;
+    onSelect: (product: any) => void;
+    setOpenList: (open: boolean) => void;
+}
+
+function SearchResults({ query, onSelect, setOpenList }: SearchResultsProps){
+    const [products, setProducts] = React.useState<Products[]>([]);
+    const [isLoading, setLoading] = React.useState(false)
+    const [value, setValue] = React.useState("")
+
+    const [debouncedValue] = useDebounce(query, 200);
+
+    const fetchData = React.useCallback(async() => {
+        setLoading(true);
+        const products = await searchProductsByName(debouncedValue);
+        setLoading(false);
+        setProducts(products);
+    }, [debouncedValue])
+
+    React.useEffect(() => {
+        fetchData();
+    }, [debouncedValue, fetchData]);
+
+    return (
+        <CommandList>
+            {isLoading && <CommandEmpty>Loading.</CommandEmpty>}
+            <CommandGroup>
+                {products.map((product) => {
+                    return (
+
+                    <CommandItem
+                        key={product.id}
+                        value={product.id.toString()}
+                        onSelect={(currentValue) => {
+                            setOpenList(false)
+                            onSelect({...product, quantity: 1, selected: true})
+                        }}
+                        onClick={() => onSelect({...product, quantity: 1, selected: true})}
+                    >
+                    {`${product.name} ($${product.price})`}
+                    <CheckIcon
+                        className={cn(
+                        "ml-auto h-4 w-4",
+                        value === product.id.toString() ? "opacity-100" : "opacity-0"
+                        )}
+                    />
+                    </CommandItem>
+                    );
+                })}
+            </CommandGroup>
+        </CommandList>
+    )
 }
