@@ -18,7 +18,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { searchProductsByName } from "@/services/api"
+import { searchProducts, searchProductsByName } from "@/services/api"
 import useDebounce from "@/hooks/useDebounce"
 
 
@@ -80,9 +80,11 @@ function SearchResults({ query, onSelect, setOpenList }: SearchResultsProps){
 
     const fetchData = React.useCallback(async() => {
         setLoading(true);
-        const products = await searchProductsByName(debouncedValue);
+        const products = await searchProducts({
+          name: debouncedValue
+        });
         setLoading(false);
-        setProducts(products);
+        setProducts(products.products);
     }, [debouncedValue])
 
     React.useEffect(() => {

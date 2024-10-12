@@ -1,6 +1,6 @@
 "use client"
 
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { z, ZodSchema } from "zod";
 import {
     Form,
@@ -24,9 +24,14 @@ export function DynamicForm({ schema, onSubmit, renderComponent }: DynamicFormPr
     const form = useForm({
         resolver: zodResolver(schema)
     })
+
+    const handleSubmit: SubmitHandler<any> = (data) => {
+        onSubmit(data);
+        form.reset();
+    }
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
+            <form onSubmit={form.handleSubmit(handleSubmit)}>
                 {renderComponent(form)}
             </form>
         </Form>
