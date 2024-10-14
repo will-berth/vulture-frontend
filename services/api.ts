@@ -26,10 +26,17 @@ interface QueryFilter{
     price_max?: string;
     stock_min?: string;
     stock_max?: string;
+    start_date?: Date;
+    end_date?: Date;
+}
+
+interface DateRangeFilter{
+    start_date: Date;
+    end_date: Date;
 }
 
 export const searchProductsByName = async (name: string) => {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?limit=20&page=1&name=${name}`);
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products?name=${name}`);
     const data = await response.json();
     return data.products;
 }
@@ -78,4 +85,40 @@ export const registerProduct = async(product: Product) => {
     if(response.status !== 200) throw new Error('Error: register product')
     const data = await response.json();
     return data;
+}
+
+export const getSales = async (query: QueryFilter) => {
+    const queryString = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+        if (value !== undefined) {
+            queryString.append(key, value.toString());
+        }
+    });
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/sales?${queryString}`);
+    const data = await response.json();
+    return data.sales;
+}
+
+export const getStaticStats = async () => {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stats/statics`);
+    const data = await response.json();
+    return data.stats;
+}
+
+export const getTopProducts = async () => {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stats/top-products`);
+    const data = await response.json();
+    return data.stats;
+}
+
+export const getStatsByProduct = async (id: number, query: QueryFilter) => {
+    const queryString = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+        if (value !== undefined) {
+            queryString.append(key, value.toString());
+        }
+    });
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stats/product/${id}?${queryString}`);
+    const data = await response.json();
+    return data.stats;
 }
